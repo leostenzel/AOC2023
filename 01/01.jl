@@ -27,22 +27,37 @@ md"## Part two"
 
 # ╔═╡ ed58f513-bbd0-4a2c-898c-a671cd38b8f3
 replacements = [
-	"one" => "1", 
-	"two" => "2", 
-	"three" => "3", 
-	"four" => "4", 
-	"five" => "5", 
-	"six" => "6", 
-	"seven" => "7", 
-	"eight" => "8", 
+	"one" => "1"
+	"two" => "2" 
+	"three" => "3" 
+	"four" => "4" 
+	"five" => "5" 
+	"six" => "6" 
+	"seven" => "7" 
+	"eight" => "8" 
 	"nine" => "9"
 ]
 
 # ╔═╡ 7404ff1a-c919-49ee-b3a8-7561ed587c1c
 replacewords(x) = replace(x, replacements...)
 
+# ╔═╡ 18ab5271-95b6-42b6-831a-2fdc800354bc
+overlaps = 
+["oneight" => "18"
+ "twone" => "21"
+ "threeight" => "38"
+ "fiveight" => "58"
+ "sevenine" => "79"
+ "eightwo" => "82"
+ "eighthree" => "83"
+ "nineight" => "98"
+]
+
+# ╔═╡ f4ba496a-3f54-4c88-87bf-0b2b63184622
+overlappingwords(x) = replace(x, overlaps...)
+
 # ╔═╡ 209fd08a-b30f-4c7e-b5ef-8ede12be0d1d
-input .|> replacewords .|> keepdigits .|> firstlast .|> parseint |> sum
+input .|> overlappingwords .|> replacewords .|> keepdigits .|> firstlast .|> parseint |> sum
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -81,6 +96,8 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 # ╟─732eabbf-fad7-4e78-a1ee-ffc249af55d1
 # ╠═ed58f513-bbd0-4a2c-898c-a671cd38b8f3
 # ╠═7404ff1a-c919-49ee-b3a8-7561ed587c1c
+# ╠═18ab5271-95b6-42b6-831a-2fdc800354bc
+# ╠═f4ba496a-3f54-4c88-87bf-0b2b63184622
 # ╠═209fd08a-b30f-4c7e-b5ef-8ede12be0d1d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
