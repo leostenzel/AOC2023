@@ -14,6 +14,14 @@ begin
 		green::T
 		blue::T
 	end
+
+	local ex = let ex = :(error())
+		for c ∈ (:red, :green, :blue)
+			ex = :(col == $(String(c)) ? $(Symbol(c)) = num : $(ex))
+		end
+		ex
+	end
+	
 	quote
 		function Round(a::AbstractString)
 			red = green = blue = 0
@@ -22,12 +30,7 @@ begin
 				num, col = split(c_str, ' ', keepempty=false)
 				num = Base.parse(Int, num)
 				
-				$(let ex = :(error())
-					for c ∈ (:red, :green, :blue)
-						ex = :(col == $(String(c)) ? $(Symbol(c)) = num : $(ex))
-					end
-					ex
-				end)
+				$ex
 			end
 			Round(red, green, blue)
 		end
@@ -51,7 +54,7 @@ end
 id(g::Game) = g.id
 
 # ╔═╡ f3408630-95c7-43ee-88f1-98726a15c174
-games = "input" |> readlines .|> Game;
+games = "input" |> readlines .|> Game
 
 # ╔═╡ 59f1fee5-510e-4ed2-86d3-16d14d15337e
 md"one could avoid defining these functions and broadcast with `getfield`. Don't think that would be better?"
