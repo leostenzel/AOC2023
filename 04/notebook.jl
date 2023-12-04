@@ -8,37 +8,29 @@ using InteractiveUtils
 using JuliaSyntax
 
 # ╔═╡ cf6810ce-0505-403a-b8e7-44b26179fa15
-numbers = "input" |> readlines .|> l->split(l, ':')[2]
+games = "input" |> readlines .|> 
+	x->split(x, ':')[end] .|> 
+	x->split(x, '|') .|>
+	x->split(x, ' '; keepempty=false) .|>
+	x->Base.parse(Int, x);
 
 # ╔═╡ 7cb27dfc-3ecf-4401-847c-498be5cd866c
 begin
 	local res = 0
-	for game ∈ numbers
-		win, you = split(game, '|') .|> x->split(x, ' ', keepempty=false)
-
-		win = Base.parse.(Int, win)
-		you = Base.parse.(Int, you)
-		@assert length(win) == length(Set(win))
-		@assert length(you) == length(Set(you))
-		
-		res += 1 << (intersect(win, you) |> length) >> 1
-
+	for game ∈ games
+		res += 1 << (intersect(game...) |> length) >> 1
 	end
 	@show res
 end
 
 # ╔═╡ 00449ce3-7cc0-48d5-ad0a-920c3a42f3cb
 begin
-	local multipliers = ones(BigInt, length(numbers))
-	for (i,game) ∈ enumerate(numbers)
-		win, you = split(game, '|') .|> x->split(x, ' ', keepempty=false)
-
-		win = Base.parse.(Int, win)
-		you = Base.parse.(Int, you)
-
-		add_cards = intersect(win,you) |> length
+	local multipliers = ones(Int, length(games))
+	for (i, game) ∈ enumerate(games)
+		
+		add_cards = intersect(game...) |> length
 		if add_cards > 0
-			multipliers[i+1:i+add_cards] .+= multipliers[i]
+			multipliers[(1:add_cards) .+ i] .+= multipliers[i]
 		end
 	end
 	@show sum(multipliers)
