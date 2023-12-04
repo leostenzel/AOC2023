@@ -6,7 +6,7 @@ using InteractiveUtils
 
 # ╔═╡ cf6810ce-0505-403a-b8e7-44b26179fa15
 cards = "input" |> readlines .|> 
-	x->split(x, ':')[end] .|> 
+	x->split(x, ':')[end] |> 
 	x->split(x, '|') .|>
 	x->split(x; keepempty=false) .|>
 	x->parse(Int, x);
@@ -23,11 +23,10 @@ begin
 	for (i, card) ∈ enumerate(cards)
 		
 		add_cards = intersect(card...) |> length
-		if add_cards > 0
-			multipliers[(1:add_cards) .+ i] .+= multipliers[i]
-		end
+		multipliers[(1:add_cards) .+ i] .+= multipliers[i]
+		
 	end
-	@show sum(multipliers)
+	sum(multipliers)
 end
 
 # ╔═╡ Cell order:
