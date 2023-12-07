@@ -13,12 +13,20 @@ inp = ("input" |> readdlm)[:, 2:end] |> Matrix{Int}
 # ╔═╡ c94709d2-6fa9-4de8-b22f-bc8df7ad712a
 check_solution(duration, time, dist) = duration * (time - duration) > dist
 
+# ╔═╡ ddcf018a-e89b-4f7d-bddf-db3b4c339df2
+md"$\frac{-b\pm \sqrt{b^2-4ac}}{2a}$"
+
+# ╔═╡ cfec3774-38ac-4fa8-b84e-37c832908e32
+float_solutions(time, dist) = (-time .+ [1, -1] * √(time^2-4*dist)) / -2 
+
 # ╔═╡ 9f349a89-c4dd-400f-8376-8a3d9deca66b
 begin
 	res = 1
 	for col ∈ eachcol(inp)
 		f = findfirst(x -> check_solution(x, col...), 1:col[2])
 		l = findlast(x -> check_solution(x, col...), 1:col[2])
+		@show f, l
+		@show float_solutions(col...)
 		res *= l-f + 1
 	end
 	res
@@ -50,6 +58,12 @@ function max_solution(time, dist)
 	tmp = sup_solution(time, dist)
 	findlast(x -> check_solution(x, inp2...), 1:tmp)
 end
+
+# ╔═╡ 9889409f-6b1d-4dbf-ae33-51dacf88c905
+@show min_solution(inp2...), max_solution(inp2...)
+
+# ╔═╡ 855c43cc-4911-4083-a807-6e73ddc6e835
+(float_solutions(inp2...) .|> (ceil, floor) .|> Int |> diff)[] + 1
 
 # ╔═╡ d0446ce2-0030-459f-a34f-e14628fc6597
 max_solution(inp2...) - min_solution(inp2...) + 1
@@ -85,6 +99,8 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 # ╠═c0cd1d72-120a-4fa7-9b2d-e50f144a287d
 # ╠═c14ce566-93fe-11ee-386f-510efa27fe4f
 # ╠═c94709d2-6fa9-4de8-b22f-bc8df7ad712a
+# ╠═ddcf018a-e89b-4f7d-bddf-db3b4c339df2
+# ╠═cfec3774-38ac-4fa8-b84e-37c832908e32
 # ╠═9f349a89-c4dd-400f-8376-8a3d9deca66b
 # ╟─b6e35029-4f33-4ddd-a001-934a853e118d
 # ╠═9c589240-428d-4764-bacd-2e9e22ddc90c
@@ -93,6 +109,8 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 # ╟─9fab67bc-ac8f-49ab-824c-b1e51b94a42d
 # ╠═cefe1b20-5c86-493e-9a93-25e42d2cff32
 # ╠═6b5b86a5-fc59-4a95-8e8e-9ed235c53981
+# ╠═9889409f-6b1d-4dbf-ae33-51dacf88c905
 # ╠═d0446ce2-0030-459f-a34f-e14628fc6597
+# ╠═855c43cc-4911-4083-a807-6e73ddc6e835
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

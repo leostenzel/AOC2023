@@ -26,7 +26,7 @@ end
 
 # ╔═╡ 95d8270b-ef72-474d-b97f-09f75c0f39ec
 begin
-	dict = DefaultDict{String, Vector{Entry}}([])
+	dict = DefaultDict{String, Vector{Entry}}(Vector{Entry})
 	global key_strings = String[]
 	for line ∈ inp[3:end]
 		isempty(line) && continue
