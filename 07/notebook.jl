@@ -38,8 +38,8 @@ function score(card::AbstractString)
 		res += offset
 	end
 
-	for (i, c) ∈ enumerate(reverse(card))
-		res += card_strength[c] * length(card_strength)^(i-1)
+	for (i, c) ∈ enumerate(card)
+		res += card_strength[c] * length(card_strength)^(5-i)
 	end
 	res
 end
@@ -86,8 +86,8 @@ function score2(card::AbstractString)
 		res += offset
 	end
 
-	for (i, c) ∈ enumerate(reverse(card))
-		res += card_strength2[c] * length(card_strength2)^(i-1)
+	for (i, c) ∈ enumerate(card)
+		res += card_strength2[c] * length(card_strength2)^(5-i)
 	end
 	res
 end

@@ -5,17 +5,108 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 59dd4339-6c9e-4214-9f9c-c837f1762692
-using JuliaSyntax, DataStructures
+using JuliaSyntax
+
+# ╔═╡ 92042062-da17-4b3a-a93f-05f7b203205c
+abstract type AbstractInterval{T} end
+
+# ╔═╡ fc6f75c5-80dd-469c-89e2-e59820ce13ad
+struct EmptyInterval{T} <: AbstractInterval{T} end
+
+# ╔═╡ 32d92df7-8df5-4558-9c55-a36efca323ea
+begin
+	Base.isempty(AbstractInterval) = false
+	Base.isempty(EmptyInterval) = true
+end
 
 # ╔═╡ c7ba091c-93a2-11ee-1f81-0d504adbce54
-struct Interval{T<:Integer} 
+struct Interval{T<:Integer} <: AbstractInterval{T}
 	start::T
 	stop::T
-	Interval(a::T, b::T) where {T<:Integer} = a <= b ? new{T}(a, b) : nothing
+	Interval(a::T, b::T) where {T<:Integer} = a <= b ? new{T}(a, b) : EmptyInterval{T}()
 end
+
+# ╔═╡ 88d37adb-6e18-4594-a9a6-febb08313b03
+Base.:∈(i::T, inter::Interval) where {T<: Integer} = inter.start <= i <= inter.stop
+
+# ╔═╡ 16493a49-20ec-4a77-bdf2-96edaf76437d
+inp = readlines("input");
+
+# ╔═╡ 40845d48-1f0a-4563-8cf0-45b440fcc474
+seeds = split(inp[1], ':')[end] |> split .|> x->Base.parse(Int, x);
+
+# ╔═╡ 0faf3b9a-47ab-4014-83b0-a089a6880e52
+Base.:⊆(a::Interval, b::Interval) = b.start <= a.start && a.stop <= b.stop
+
+# ╔═╡ 579b3dc5-bbdf-4c00-8a01-7d7c5caed94f
+Base.:+(a::Interval, b::Integer) = Interval(a.start + b, a.stop + b)
+
+# ╔═╡ 102dbfff-97e4-4b17-8c5d-e43c4edd3dff
+begin
+	struct Piece{T<:Integer}
+		interval::AbstractInterval{T}
+		diff::T
+	end
+	Piece(dest::T, src::T, rge::T) where {T<:Integer} = 
+		Piece{T}(Interval(src, src+rge-one(T)), dest-src)
+end
+
+# ╔═╡ d2661415-b0ef-4b0b-bd99-884bc74012ab
+begin
+	# Piecewise Affine Dictionary
+	struct PADict{T<:Integer}
+		segments::Vector{Piece{T}}
+	end
+	PADict{T}() where {T<:Integer} = PADict{T}(Piece{T}[])
+end
+
+# ╔═╡ 1c4d0f88-3df5-4a47-8d48-38922db6bd2c
+Base.:∈(i::T, p::Piece{T}) where {T<: Integer} = i ∈ p.interval
+
+# ╔═╡ 577f7552-eef3-4da0-bafb-47feecb67263
+begin
+	dict = Dict{String, PADict{Int}}()
+	global mapkeys = String[]
+	for line ∈ inp[3:end]
+		isempty(line) && continue
+	
+		if occursin("map", line) 
+			push!(mapkeys, line)
+			dict[mapkeys[end]] = PADict{Int}()
+		else
+			vals = line |> split .|> x->Base.parse(Int, x)
+
+			push!(dict[mapkeys[end]].segments, Piece(vals...))
+		end
+	end
+end
+
+# ╔═╡ 0b4eb17f-1864-4ae9-9038-c6826e9e4e73
+function apply_maps(seed)
+	for key in mapkeys
+		seed = dict[key][seed]
+	end
+	seed
+end
+
+# ╔═╡ 777d07aa-a439-4afa-9940-b8837b731659
+Base.getindex(a::Piece, b::Interval) = b ⊆ a.interval ? b + a.diff : error() 
+
+# ╔═╡ 8702e836-30a3-40e3-9053-74ef335f518e
+Base.:∩(a::Interval, b::Interval) = 
+	Interval(max(a.start, b.start), min(a.stop, b.stop))
+
+# ╔═╡ 800894e3-794c-48a3-92d8-acad733c85fc
+Base.:∩(a::Interval, b::Piece) = a ∩ b.interval
+
+# ╔═╡ 3c50deb2-4c84-43cd-9985-95ad8356f0db
+
 
 # ╔═╡ 560901b7-3b29-4992-9775-0edcb2283da7
 Base.minimum(a::Interval{<:Integer}) = a.start
+
+# ╔═╡ a5d478ee-815c-402d-804a-d6f80ccc805f
+apply_maps.(seeds) |> minimum
 
 # ╔═╡ 6ad09202-860b-414f-a5aa-364fecb22462
 Base.maximum(a::Interval{<:Integer}) = a.stop
@@ -72,6 +163,48 @@ begin
 	Base.:∩(a::Union{Interval{T}, Set{Interval{T}}}, b::Entry) where {T<:Integer} = a ∩ b.interval
 end
 
+# ╔═╡ 285bc16b-5d0b-4340-84d8-8c783fbf61c3
+function Base.getindex(d::PADict{T}, idx::T) where {T<:Integer}
+	for seg in d.segments
+		idx ∈ seg && return seg[idx]
+	end
+	idx
+end
+
+# ╔═╡ b148ad43-c4fb-427a-bf2a-61b3ecb393a8
+Base.getindex(p::Piece, i::Integer) = i ∈ p ? i + p.diff : error()
+
+# ╔═╡ a3f10ba2-c452-432c-99f9-174075ecbfe1
+function Base.getindex(a::PADict{T}, b::Interval{T}) where {T<:Integer}
+	b = Interval{T}[b]
+	b2 = Interval{T}[]
+	for seg ∈ a.segments
+		for bᵢ ∈ b
+			tmp = bᵢ ∩ seg
+			if !isempty(tmp)
+				push!(b2, seg[tmp])
+				# remove bᵢ from b
+				# append the setdiff bᵢ \ tmp to b 
+			end
+		end
+	end
+	push!(b2, b) 
+end
+
+# ╔═╡ 07da6639-6b5f-44f0-a699-f0a83e436fc8
+md"Let's define some data structures"
+
+# ╔═╡ 99a2d6b6-9ff4-477c-87d0-1eec670f9655
+md"Now let's actually solve the problem…"
+
+# ╔═╡ 97f4b9ac-2e77-4b59-a275-63c52aa74653
+md"I parse the input into a dictionary with the map names as keys… not ideal, because I also need to keep track of the order of keys. Maybe just a vector?"
+
+# ╔═╡ 288e0a8e-e3d7-43a5-a982-af2701f90ed9
+md"""## Part II
+Now the fun part begins, and we redefine our functionality from `Int` to `Intervals`
+"""
+
 # ╔═╡ 36c9912c-36ee-4f98-88eb-4cfe8fea4b8f
 function Base.:∪(a::Interval, b::Interval) 
 	!isnothing(a ∩ b) && return Interval(
@@ -88,39 +221,13 @@ function Base.setdiff(a::Interval{T}, b::Interval{T}) where {T<:Integer}
 end
 
 # ╔═╡ e7bd1c4c-0fd4-4465-8943-87f4778fddd1
+# ╠═╡ disabled = true
+#=╠═╡
 inp = readlines("input");
-
-# ╔═╡ b52330ea-a9a7-417d-927b-5c7549312f68
-begin
-	dict = DefaultDict{String, Vector{Entry}}([])
-	global key_strings = String[]
-	for line ∈ inp[3:end]
-		isempty(line) && continue
-	
-		if occursin("map", line)
-			push!(key_strings, split(line)[1])
-		else
-			vals = line |> split .|> x->Base.parse(Int, x)
-			push!(dict[key_strings[end]], 
-				Entry(Interval(vals[2], vals[2] + vals[3]-1), vals[1]-vals[2]))
-		end
-	end
-end
-
-# ╔═╡ 7f13cd4c-91ba-433a-85cc-8a9be63564e8
-function seed2location(seed::Integer)
-	val = seed
-	for key in key_strings
-		entry = findfirst(e->val ∈ e, dict[key])
-		if !isnothing(entry)
-			val = dict[key][entry](val)
-		end
-	end
-	val
-end
+  ╠═╡ =#
 
 # ╔═╡ 1b8a8c2a-e1fb-4855-aa8e-8a2b4e155c4f
-seeds = split(inp[1], ':')[end] |> split .|> x->Base.parse(Int, x);
+
 
 # ╔═╡ ced41694-32a1-4449-b3c6-4a7ad8932d0d
 begin
@@ -179,11 +286,9 @@ Set([nothing]) .|> isnothing |> all
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
-DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 JuliaSyntax = "70703baa-626e-46a2-a12c-08ffd08c73b4"
 
 [compat]
-DataStructures = "~0.18.15"
 JuliaSyntax = "~0.4.7"
 """
 
@@ -193,67 +298,42 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.4"
 manifest_format = "2.0"
-project_hash = "877ad2558e908e28c89faa4b27d644b11d5ff263"
-
-[[deps.Base64]]
-uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
-
-[[deps.Compat]]
-deps = ["UUIDs"]
-git-tree-sha1 = "886826d76ea9e72b35fcd000e535588f7b60f21d"
-uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "4.10.1"
-
-    [deps.Compat.extensions]
-    CompatLinearAlgebraExt = "LinearAlgebra"
-
-    [deps.Compat.weakdeps]
-    Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-    LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-
-[[deps.DataStructures]]
-deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
-git-tree-sha1 = "3dbd312d370723b6bb43ba9d02fc36abade4518d"
-uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.18.15"
-
-[[deps.InteractiveUtils]]
-deps = ["Markdown"]
-uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+project_hash = "217b45c91364b0c5cb7a0d50ee3cdf7390293d8f"
 
 [[deps.JuliaSyntax]]
 git-tree-sha1 = "1a4857ab55396b2da745f07f76ce4e696207b740"
 uuid = "70703baa-626e-46a2-a12c-08ffd08c73b4"
 version = "0.4.7"
-
-[[deps.Markdown]]
-deps = ["Base64"]
-uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
-
-[[deps.OrderedCollections]]
-git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
-uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.6.3"
-
-[[deps.Random]]
-deps = ["SHA", "Serialization"]
-uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-
-[[deps.SHA]]
-uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
-version = "0.7.0"
-
-[[deps.Serialization]]
-uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
-
-[[deps.UUIDs]]
-deps = ["Random", "SHA"]
-uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 """
 
 # ╔═╡ Cell order:
 # ╠═59dd4339-6c9e-4214-9f9c-c837f1762692
+# ╟─07da6639-6b5f-44f0-a699-f0a83e436fc8
+# ╠═92042062-da17-4b3a-a93f-05f7b203205c
+# ╠═fc6f75c5-80dd-469c-89e2-e59820ce13ad
+# ╠═32d92df7-8df5-4558-9c55-a36efca323ea
 # ╠═c7ba091c-93a2-11ee-1f81-0d504adbce54
+# ╠═102dbfff-97e4-4b17-8c5d-e43c4edd3dff
+# ╠═d2661415-b0ef-4b0b-bd99-884bc74012ab
+# ╠═285bc16b-5d0b-4340-84d8-8c783fbf61c3
+# ╠═b148ad43-c4fb-427a-bf2a-61b3ecb393a8
+# ╠═1c4d0f88-3df5-4a47-8d48-38922db6bd2c
+# ╠═88d37adb-6e18-4594-a9a6-febb08313b03
+# ╟─99a2d6b6-9ff4-477c-87d0-1eec670f9655
+# ╠═16493a49-20ec-4a77-bdf2-96edaf76437d
+# ╠═40845d48-1f0a-4563-8cf0-45b440fcc474
+# ╟─97f4b9ac-2e77-4b59-a275-63c52aa74653
+# ╠═577f7552-eef3-4da0-bafb-47feecb67263
+# ╠═0b4eb17f-1864-4ae9-9038-c6826e9e4e73
+# ╠═a5d478ee-815c-402d-804a-d6f80ccc805f
+# ╟─288e0a8e-e3d7-43a5-a982-af2701f90ed9
+# ╠═0faf3b9a-47ab-4014-83b0-a089a6880e52
+# ╠═777d07aa-a439-4afa-9940-b8837b731659
+# ╠═579b3dc5-bbdf-4c00-8a01-7d7c5caed94f
+# ╠═8702e836-30a3-40e3-9053-74ef335f518e
+# ╠═800894e3-794c-48a3-92d8-acad733c85fc
+# ╠═3c50deb2-4c84-43cd-9985-95ad8356f0db
+# ╠═a3f10ba2-c452-432c-99f9-174075ecbfe1
 # ╠═560901b7-3b29-4992-9775-0edcb2283da7
 # ╠═6ad09202-860b-414f-a5aa-364fecb22462
 # ╠═78841661-2924-4392-a1a6-50982c0ac18d
@@ -273,8 +353,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 # ╠═c3afff72-f286-4cdd-8172-fb88ec3062e3
 # ╠═841f6895-8905-4045-9c9d-6ab7a4a31b00
 # ╠═e7bd1c4c-0fd4-4465-8943-87f4778fddd1
-# ╠═b52330ea-a9a7-417d-927b-5c7549312f68
-# ╠═7f13cd4c-91ba-433a-85cc-8a9be63564e8
 # ╠═1b8a8c2a-e1fb-4855-aa8e-8a2b4e155c4f
 # ╠═e85ca572-a28b-4e20-83c0-74a549ad5aa2
 # ╠═ced41694-32a1-4449-b3c6-4a7ad8932d0d
