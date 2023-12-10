@@ -73,7 +73,6 @@ directions = inout_dict |> keys
 
 # ╔═╡ 89cf7822-0956-4049-a6e8-35e8c6195564
 begin
-	loop = CharPipe[]
 	s_loc = findfirst(==('S'), input)
 	next = nothing
 	
@@ -82,6 +81,7 @@ begin
 		!isnothing(out_dir(next)) && break
 	end
 
+	loop = CharPipe[]
 	while !isnothing(next)
 		push!(loop, next)
 		next = iterate(next)
