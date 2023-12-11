@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ fe2cd977-5c8b-41d4-8e98-e02201a52627
-input = ("input" |> readlines .|> x->Vector{Char}(x)) |> x->hcat(x...);
+input = "input" |> readlines |> stack
 
 # ╔═╡ 100ccd65-f873-41d4-8a9c-fc25c6cc7eca
 inout_dict = Dict(:north => :south, :south=>:north, :east => :west, :west => :east)
