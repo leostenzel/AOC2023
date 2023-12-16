@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.35
+# v0.19.36
 
 using Markdown
 using InteractiveUtils
@@ -30,8 +30,10 @@ md"## Part II"
 # ╔═╡ 7d866eb3-f94e-4be7-a0d0-b0d66ddfc8c1
 result = let 
 	in_split = split(input, ',') .|> x->split(x, ['-', '='], keepempty=false)
+	
 	S = OrderedDict{String, Int}
 	res = DefaultDict{Int, S}(S)
+	
 	for s in in_split
 		idx = hash256(s[1])
 		

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.35
+# v0.19.36
 
 using Markdown
 using InteractiveUtils
@@ -44,9 +44,6 @@ end
 # ╔═╡ d2bdb8ab-93f4-4aac-86a5-3f5e77c3862d
 md"## Part II"
 
-# ╔═╡ 0d37412c-e3b3-4132-a268-94474787e8f7
-count_recursive(s::AbstractString, cnt::Vector{<:Integer}) = count_recursive(s, Tuple(cnt))
-
 # ╔═╡ 297e4a90-5ae4-4e8f-9e76-29fb58dd1512
 @memoize function count_recursive(s::AbstractString, cnt::Tuple{Vararg{<:Integer}})	
 	if isempty(cnt)
@@ -88,6 +85,9 @@ count_recursive(s::AbstractString, cnt::Vector{<:Integer}) = count_recursive(s, 
 	end
 	res
 end
+
+# ╔═╡ 0d37412c-e3b3-4132-a268-94474787e8f7
+count_recursive(s::AbstractString, cnt::Vector{<:Integer}) = count_recursive(s, Tuple(cnt))
 
 # ╔═╡ 989b86bc-caaa-41d0-9c66-88841459897c
 repeat_rec(s, cnt; n=5) = reduce(*, repeat(['?', s], n-1); init=s), repeat(cnt, n)
