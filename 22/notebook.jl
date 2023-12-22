@@ -15,53 +15,19 @@ begin
 	struct Brick{T<:AbstractVector}
 		x::T; y::T; z::T
 	end
-	Brick(; x::T, y::T, z::T) where {T} = Brick{T}(x,y,z)
-	function Brick(y::Brick; args...) 
-		names = fieldnames(Brick)
-		Brick(; (names .=> getfield.((y,), names))..., args...)
-	end
 	for field ∈ fieldnames(Brick)
 		@eval $(field)(a::Brick) = getfield(a, Symbol($field))
 	end
 end
 
-# ╔═╡ ca2bb9a9-15e4-4e68-a877-bdfdc1a5bc48
-fields(a::Brick) = getfield.((a,), fieldnames(Brick))
-
-# ╔═╡ e78a4239-eab0-4c89-91a3-2cc23a3bd239
-begin
-	Base.:+(a::Brick, b::CartesianIndex{3}) = 
-		Brick(a.x .+ b[1], a.y .+ b[2], a.z .+ b[3])
-	Base.:+(a::CartesianIndex{3}, b::Brick) = +(b, a)
-	Base.isdisjoint(a::Brick, b::Brick) = any(isdisjoint.(fields.((a,b))...))
-	project(a::Brick, b::Symbol) = Brick(a; b=>1:1)
-end
-
 # ╔═╡ d075a36c-6356-4cdc-adc3-a0eaf9e72fcf
-function parse_bricks(input)
+function parse_bricks(input::Vector{<:AbstractString})
 	bricks = Vector{Brick{UnitRange{Int}}}(undef, length(input)) 
 	for (i, line) ∈ enumerate(input)
 		l, r = split(line, '~') .|> x->split(x, ',') |> x->parse.(Int, x)
 		bricks[i] = Brick(range.(l, r)...)
 	end
 	bricks
-end
-
-# ╔═╡ 47afb513-c8f0-42b0-89cf-806d049e7624
-function drop_bricks!(bricks::Vector{<:Brick})
-	sort!(bricks; by=b->last(b.z))
-	
-	down = CartesianIndex(0,0,-1)
-	b_stack = DefaultDict{NTuple{2, Int}, Int}(zero(Int))
-
-	for (i, brick) ∈ enumerate(bricks)
-		zpos = maximum(b_stack[idx] for idx ∈ product(x(brick), y(brick)))
-		brick += (first(z(brick)) - zpos - 1) * down
-		
-		setindex!.((b_stack,), last(z(brick)), product(x(brick), y(brick)))
-		bricks[i] = brick
-	end
-	sort!(bricks; by=b->last(b.z))
 end
 
 # ╔═╡ 0d2b8c37-93a8-4f40-8d2f-d7df2cdabcee
@@ -78,9 +44,9 @@ function build_graph(bricks::Vector{<:Brick})
 		zpos = maximum(first(b_stack[idx]) for idx ∈ product(x(brick), y(brick)))
 
 		for idx ∈ product(x(brick), y(brick))
-			if first(b_stack[idx]) == zpos
-				add_edge!(g, last(b_stack[idx]), i)
-			end
+			first(b_stack[idx]) != zpos && continue
+
+			add_edge!(g, last(b_stack[idx]), i)
 		end
 		
 		zpos += z(brick) |> length
@@ -115,7 +81,6 @@ function count_falling(g::DiGraph{T}, v::T) where {T}
 	while !isempty(Q)
 		v = dequeue!(Q)
 		inneighbors(g, v) ⊈ falling && continue
-		
 		push!(falling, v)
 		enqueue!.((Q,), outneighbors(g, v))
 	end
@@ -406,10 +371,7 @@ version = "17.4.0+0"
 # ╠═2cf9da12-d180-4d3a-8796-3e6a50650c6a
 # ╠═cd255d96-a08d-11ee-3206-596160d7f6ad
 # ╠═d0882c0d-6788-4b13-8488-82fa9650d78c
-# ╠═ca2bb9a9-15e4-4e68-a877-bdfdc1a5bc48
-# ╠═e78a4239-eab0-4c89-91a3-2cc23a3bd239
 # ╠═d075a36c-6356-4cdc-adc3-a0eaf9e72fcf
-# ╠═47afb513-c8f0-42b0-89cf-806d049e7624
 # ╠═0d2b8c37-93a8-4f40-8d2f-d7df2cdabcee
 # ╠═3ca1efe5-cefc-48d7-b91d-e0c10afe7363
 # ╠═e61a84e5-b6af-4877-b7ff-9e584fe1f089
