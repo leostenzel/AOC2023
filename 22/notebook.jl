@@ -70,14 +70,19 @@ end
 input |> parse_bricks |> build_graph |> count_removable
 
 # ╔═╡ c840433f-3caa-4997-8de5-5ed8191b8f68
-md"## Part II"
+md"""## Part II
+This seems to simple, actually, why does it work?
+
+I do a breadth-first search, but in the graph, not in the layers…
+I'd have to prioritize the vertices in the queue by their layer number?
+"""
 
 # ╔═╡ 45d613ac-93ec-4bb7-aee9-0dbece94c9d2
 function count_falling(g::DiGraph{T}, v::T) where {T}
 	Q = Queue{T}()
 	enqueue!.((Q,), outneighbors(g, v))
-	falling = Set{Int}(v)
-	
+	falling = Set{T}(v)
+		
 	while !isempty(Q)
 		v = dequeue!(Q)
 		inneighbors(g, v) ⊈ falling && continue
@@ -94,6 +99,9 @@ g = input |> parse_bricks |> build_graph
 mapreduce(+, vertices(g)) do v
 	count_falling(g, v)
 end
+
+# ╔═╡ ac409432-daaf-484d-9623-ff3eaf883bdf
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -379,5 +387,6 @@ version = "17.4.0+0"
 # ╠═45d613ac-93ec-4bb7-aee9-0dbece94c9d2
 # ╠═b415e0ee-4c96-4110-9050-07d4afcc7756
 # ╠═de7b5beb-2845-4e5b-9a60-cee570efa431
+# ╠═ac409432-daaf-484d-9623-ff3eaf883bdf
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
